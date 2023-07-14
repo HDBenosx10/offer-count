@@ -1,0 +1,70 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+  binaryTargets = ["native", "linux-musl-openssl-3.0.x"]
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Users {
+  id        String    @id
+  username  String    @unique
+  createdAt DateTime  @default(now()) @map("created_at")
+  updatedAt DateTime  @updatedAt @map("updated_at")
+  wallets   Wallets[]
+}
+
+model Wallets {
+  id        String     @id
+  userId    String     @map("user_id")
+  code      Int
+  alias     String
+  user      Users      @relation(fields: [userId], references: [id])
+  createdAt DateTime   @default(now()) @map("created_at")
+  updatedAt DateTime   @updatedAt @map("updated_at")
+  balances  Balances[]
+  offers    Offers[]
+}
+
+model Tokens {
+  id        String     @id
+  name      String
+  symbol    String
+  precision String
+  createdAt DateTime   @default(now()) @map("created_at")
+  updatedAt DateTime   @updatedAt @map("updated_at")
+  balances  Balances[]
+  offers    Offers[]
+}
+
+model Balances {
+  id        String   @id
+  walletId  String   @map("wallet_id")
+  tokenId   String   @map("token_id")
+  balance   String
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+  wallet    Wallets  @relation(fields: [walletId], references: [id])
+  token     Tokens   @relation(fields: [tokenId], references: [id])
+  @@unique([walletId, tokenId])
+}
+
+model Offers {
+  id             String   @id
+  sellerWalletId String   @map("seller_wallet_id")
+  tokenId        String   @map("token_id")
+  amount         Int
+  unitPrice      Float    @map("unit_price")
+  currency       String
+  isActive       Boolean  @default(true) @map("is_active")
+  expirationDate DateTime @map("expiration_date")
+  createdAt      DateTime @default(now()) @map("created_at")
+  updatedAt      DateTime @updatedAt @map("updated_at")
+  seller         Wallets  @relation(fields: [sellerWalletId], references: [id])
+  token          Tokens   @relation(fields: [tokenId], references: [id])
+}
